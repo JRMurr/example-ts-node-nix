@@ -10,6 +10,6 @@
     flake-utils.lib.eachDefaultSystem (system:
       let pkgs = import nixpkgs { inherit system; };
       in with pkgs; {
-        devShell = pkgs.mkShell { buildInputs = [ nodejs-16_x ]; };
+        devShell = pkgs.mkShell { buildInputs = [ nodejs-18_x node2nix ]; };
       });
 }
