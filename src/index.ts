@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import fastify from "fastify";
 
 const server = fastify();

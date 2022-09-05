@@ -2,10 +2,14 @@
   "name": "example-node-nix",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "bin": {
+    "ts-node-nix": "dist/index.js"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "echo IT WORKS!"
   },
   "keywords": [],
   "author": "",
