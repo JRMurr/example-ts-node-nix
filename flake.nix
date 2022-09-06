@@ -52,7 +52,29 @@
             runHook postInstall
           '';
         };
+
       in with pkgs; {
+        packages = {
+          app = app;
+          docker = dockerTools.buildImage {
+            name = app.name;
+            copyToRoot = pkgs.buildEnv {
+              name = app.name;
+              paths = [ app ];
+              pathsToLink = [ "/bin" "/dist" "/node_modules" "package.json" ];
+            };
+
+            # contents = [ app ];
+            # This ensures symlinks to directories are preserved in the image
+            keepContentsDirlinks = true;
+            # This adds a correct timestamp, however breaks binary reproducibility
+            # created = "now";
+            # extraCommands = ''
+            #   mkdir -m 1777 tmp
+            # '';
+            config = { Cmd = [ "/bin/example-ts-nix" ]; };
+          };
+        };
         defaultPackage = app;
         devShell = mkShell { buildInputs = [ nodejs node2nix ]; };
       });
