@@ -14,7 +14,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        nodejs = pkgs.nodejs-18_x;
+        nodejs = pkgs.nodejs-16_x;
 
         appBuild = pkgs.stdenv.mkDerivation {
           name = "example-ts-node";

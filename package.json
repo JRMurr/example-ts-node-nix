@@ -11,9 +11,7 @@
     "start": "node dist/index.js",
     "test": "echo IT WORKS!"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "fastify": "^4.5.3"
   },
