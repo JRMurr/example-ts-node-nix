@@ -15,37 +15,45 @@
       let
         pkgs = import nixpkgs { inherit system; };
         nodejs = pkgs.nodejs-16_x;
-
-        appBuild = pkgs.stdenv.mkDerivation {
+        node2nixOutput = import ./nix { inherit pkgs nodejs system; };
+        # TODO: the source dir of this seems to be re-built alot
+        # try https://github.com/svanderburg/node2nix/issues/301 
+        nodeDeps = node2nixOutput.nodeDependencies;
+        app = pkgs.stdenv.mkDerivation {
           name = "example-ts-node";
-          version = "0.1.0"; # TODO: parse from package.json
+          version = "0.1.0";
+          # TODO: https://github.com/hercules-ci/gitignore.nix/blob/master/docs/gitignoreFilter.md to filter nix files
           src = gitignore.lib.gitignoreSource ./.;
           buildInputs = [ nodejs ];
-          # https://nixos.org/manual/nixpkgs/stable/#sec-stdenv-phases
           buildPhase = ''
             runHook preBuild
-            npm ci # sad does not work, no internet access in pure mode
+
+            ln -sf ${nodeDeps}/lib/node_modules ./node_modules
+            export PATH="${nodeDeps}/bin:$PATH"
+
+            # Build the distribution bundle in "dist"
             npm run build
+
             runHook postBuild
           '';
-          # checkPhase = ''
-          #   runHook preCheck
-          #   npm run test
-          #   runHook postCheck
-          # '';
           installPhase = ''
             runHook preInstall
 
-            cp -r node_modules $out/node_modules
+            mkdir -p $out/bin
             cp package.json $out/package.json
             cp -r dist $out/dist
+            ln -sf ${nodeDeps}/lib/node_modules $out/node_modules
+
+            # copy entry point, in this case our index.ts has the node shebang
+            # nix will patch the shebang to be the node version specified in buildInputs
+            cp dist/index.js $out/bin/example-ts-nix
+            chmod a+x $out/bin/example-ts-nix
 
             runHook postInstall
           '';
         };
-
       in with pkgs; {
-        defaultPackage = appBuild;
-        devShell = mkShell { buildInputs = [ nodejs ]; };
+        defaultPackage = app;
+        devShell = mkShell { buildInputs = [ nodejs node2nix ]; };
       });
 }
