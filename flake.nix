@@ -12,9 +12,32 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, gitignore, dream2nix, ... }:
-    dream2nix.lib.makeFlakeOutputs {
-      systems = flake-utils.lib.defaultSystems;
-      config.projectRoot = ./.;
-      source = gitignore.lib.gitignoreSource ./.;
-    };
+
+    let
+      dream2nixOutputs = dream2nix.lib.makeFlakeOutputs {
+        systems = flake-utils.lib.defaultSystems;
+        config.projectRoot = ./.;
+        source = gitignore.lib.gitignoreSource ./.;
+      };
+      customOutput = flake-utils.lib.eachDefaultSystem (system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+          app = dream2nixOutputs.packages."${system}".example-node-nix;
+        in with pkgs; {
+          packages.docker = dockerTools.buildImage {
+            name = app.packageName;
+            copyToRoot = pkgs.buildEnv {
+              name = app.packageName;
+              paths = [ app ];
+              pathsToLink = [ "/bin" "/lib" ];
+            };
+
+            # This ensures symlinks to directories are preserved in the image
+            keepContentsDirlinks = true;
+            config = { Cmd = [ "/bin/ts-node-nix" ]; };
+          };
+        });
+
+      # deep merge outputs together
+    in nixpkgs.lib.recursiveUpdate dream2nixOutputs customOutput;
 }
